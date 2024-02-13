@@ -1,0 +1,18 @@
+from PyQt5.QtWidgets import (QApplication, QLabel, QLineEdit, QMainWindow, QPushButton, QVBoxLayout, QWidget, QComboBox)
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+
+class MainWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+ # Назначим заголовок окна
+        self.setWindowTitle("График")
+# Создать приложение QApplication
+app = QApplication([])
+# Создать окно приложения
+main_window = MainWindow()
+main_window.show()
+# Запустить приложение
+app.exec_()
