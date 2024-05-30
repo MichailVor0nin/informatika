@@ -1,0 +1,126 @@
+from PyQt5.QtWidgets import (QApplication, QLabel, QMainWindow, QPushButton, QFormLayout, QWidget, QComboBox, QTableWidget, QTableWidgetItem)
+import matplotlib.pyplot as plt
+from main import TasksLinearProgramming
+import numpy as np
+
+class MainWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+
+        self.setWindowTitle('Задание 3')
+        self.fig = plt.figure()
+        self.setGeometry(100, 100, 1100, 700)
+        cental_widget = QWidget()
+        layout = QFormLayout()
+        cental_widget.setLayout(layout)
+        plt.grid(True)
+        self.setCentralWidget(cental_widget)
+
+        self.func_table_label = QLabel('Коэффициенты целевой функции')
+        self.func_table = QTableWidget()
+        self.func_table.setColumnCount(4)
+        self.func_table.setRowCount(3)
+        self.func_table.setHorizontalHeaderLabels(['k1', 'k2', 'k3', 'k4'])
+
+        self.uneq_table_label = QLabel('Таблица неравенств')
+        self.uneq_table = QTableWidget()
+        self.uneq_table.setColumnCount(6)
+        self.uneq_table.setRowCount(4)
+        self.uneq_table.setHorizontalHeaderLabels(['k1', 'k2', 'k3', 'k4', 'знак', 'правая часть'])
+
+        for i in range(self.uneq_table.rowCount()):
+            widget = QComboBox()
+            widget.addItems(['<=', '>='])
+            self.uneq_table.setCellWidget(i, 4, widget)
+
+        self.eq_table_label = QLabel('Таблица равенств')
+        self.eq_table = QTableWidget()
+        self.eq_table.setColumnCount(6)
+        self.eq_table.setRowCount(4)
+        self.eq_table.setHorizontalHeaderLabels(['k1', 'k2', 'k3', 'k4', 'знак', 'правая часть'])
+
+        for i in range(self.eq_table.rowCount()):
+            self.eq_table.setItem(i, 4, QTableWidgetItem('='))
+
+        self.bounds_table_label = QLabel('Таблица границ')
+        self.bounds_table = QTableWidget()
+        self.bounds_table.setColumnCount(8)
+        self.bounds_table.setRowCount(2)
+        self.bounds_table.setHorizontalHeaderLabels(['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'])
+
+        self.solvebutton = QPushButton('Решить')
+        self.solvebutton.clicked.connect(self.solve)
+
+        layout.addRow(self.func_table_label)
+        layout.addRow(self.func_table)
+        layout.addRow(self.uneq_table_label)
+        layout.addRow(self.uneq_table)
+        layout.addRow(self.eq_table_label)
+        layout.addRow(self.eq_table)
+        layout.addRow(self.bounds_table_label)
+        layout.addRow(self.bounds_table)
+        layout.addRow(self.solvebutton)
+
+    def solve(self):
+        target_coef = []
+        for i in range(self.func_table.columnCount()):
+            if self.func_table.item(0, i) is not None:
+                if self.func_table.item(0, i) != '':
+                    target_coef.append(float(self.func_table.item(0, i).text()))
+
+        optimization_parameters = np.zeros(len(target_coef))
+        target_value = 0
+        A = []
+        b = []
+        for i in range(self.uneq_table.rowCount()):
+            subvector = []
+            for j in range(4):
+                if self.uneq_table.item(i, j) is not None:
+                    subvector.append(float(self.uneq_table.item(i, j).text()))
+
+            if len(subvector) > 0:
+                A.append(subvector)
+
+        for i in range(self.uneq_table.rowCount()):
+            if self.uneq_table.item(i, 5) is not None:
+                b.append(float(self.uneq_table.item(i, 5).text()))
+
+        for i in range(self.eq_table.rowCount()):
+            for j in range(4):
+                if self.eq_table.item(i, j) is not None:
+                    A_eq = []
+                    for i in range(self.eq_table.rowCount()):
+                        subvector_2 = []
+                        for j in range(4):
+                            if self.eq_table.item(i, j) is not None:
+                                subvector_2.append(float(self.eq_table.item(i, j).text()))
+                        if len(subvector_2) > 0:
+                            A_eq.append(subvector_2)
+                else:
+                    A_eq = None
+
+        for i in range(self.eq_table.rowCount()):
+            if self.eq_table.item(i, 5) is not None:
+                b_eq = []
+                for i in range(self.eq_table.rowCount()):
+                    if self.eq_table.item(i, 5) is not None:
+                        b_eq.append(float(self.eq_table.item(i, 5).text()))
+
+            else:
+                b_eq = None
+        bnds = []
+        for i in range(self.bounds_table.rowCount()):
+            subvector_3 = []
+            for j in range(4):
+                if self.bounds_table.item(i, j) is not None:
+                    subvector_3.append(float(self.bounds_table.item(i, j).text()))
+            if len(subvector_3) > 0:
+                bnds.extend([(subvector_3[i], subvector_3[i + 1]) for i in range(0, len(subvector_3), 2)])
+
+        problem = TasksLinearProgramming(optimization_parameters, target_coef, target_value, A, b,A_eq=A_eq,b_eq= b_eq, bnds=bnds)
+        problem.solve()
+        print(problem)
+app = QApplication([])
+main = MainWindow()
+main.show()
+app.exec()
